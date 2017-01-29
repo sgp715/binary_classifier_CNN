@@ -6,13 +6,13 @@
 # Usage
 * train the network with images from two directories
 ```
-$ python net.py -train <path/to/images> <path/to/images2>"
+$ python bcCNN.py -train <path/to/images> <path/to/images2>"
 ```
 * test the accuracy on images from two directories
 ```
-$ python net.py -test <path/to/images1> <path/to/images2>"
+$ python bcCNN.py -test <path/to/images1> <path/to/images2>"
 ```
 * classify a single image
 ```
-$ python net.py -classify <path/image/to/classify>
+$ python bcCNN.py -classify <path/image/to/classify>
 ```

@@ -85,6 +85,7 @@ class Net:
         pool3 = pool_layer(conv3, [1, 3, 3, 1], [1, 2, 2, 1], 3)
 
         reshape_pool3 = tf.reshape(pool3, [-1, 256])
+        print reshape_pool3.get_shape()
 
         full1 = full_layer(reshape_pool3, 256, 64, 1)
         #full2 = full_layer(full1, 64, 32, 2)
