@@ -131,7 +131,7 @@ class Net:
                 if epoch % 20 == 0:
                     output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data}))
                     accuracy = self.compute_accuracy(output, validation_labels)
-                    print str(accuracy) + '%'
+                    print str(epoch) + ". " + str(accuracy) + '%'
         except KeyboardInterrupt:
             print "Saving model before exiting"
             self.saver.save(self.sess, "model.ckpt")
@@ -165,7 +165,6 @@ class Net:
 
         if os.path.isfile('model.ckpt.meta'):
             output = np.argmax(self.sess.run(self.logits, feed_dict={self.X: img})[0])
-            print "classification: " + str(output)
             return output
         else:
             print "Model does not exist yet...train first"
@@ -190,7 +189,7 @@ if __name__ == "__main__":
     if len(args) == 2:
         if args[0] == "-classify":
             path = args[1]
-            net.classify(path)
+            print "classification: " + str(net.classify(path))
             exit()
 
     if len(args) == 3:
