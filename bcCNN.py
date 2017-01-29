@@ -33,7 +33,7 @@ def pool_layer(X, ksize, kstrides, number):
     pool = tf.nn.max_pool(X,
                            ksize=ksize,
                            strides=kstrides,
-                           padding='VALID',
+                           padding='SAME',
                            name='pool' + str(number))
 
     return pool
@@ -77,19 +77,21 @@ class Net:
         output: return the model
         """
 
-        conv1 = conv_layer(X, [11, 11, 3, 64], [1, 4, 4, 1], 1)
-        pool1 = pool_layer(conv1, [1, 3, 3, 1], [1, 2, 2, 1], 1)
+        conv1 = conv_layer(X, [5, 5, 3, 64], [1, 1, 1, 1], 1)
+
+        dropout = tf.nn.dropout(conv1, 0.75)
+
+        pool1 = pool_layer(dropout, [1, 2, 2, 1], [1, 2, 2, 1], 1)
         conv2 = conv_layer(pool1, [5, 5, 64, 128], [1, 1, 1, 1], 2)
-        pool2 = pool_layer(conv2, [1, 3, 3, 1], [1, 2, 2, 1], 2)
+        pool2 = pool_layer(conv2, [1, 2, 2, 1], [1, 2, 2, 1], 2)
         conv3 = conv_layer(pool2, [3, 3, 128, 256], [1, 1, 1, 1], 3)
-        pool3 = pool_layer(conv3, [1, 3, 3, 1], [1, 2, 2, 1], 3)
+        pool3 = pool_layer(conv3, [1, 2, 2, 1], [1, 2, 2, 1], 3)
 
-        reshape_pool3 = tf.reshape(pool3, [-1, 256])
-        print reshape_pool3.get_shape()
+        reshape_pool3 = tf.reshape(pool3, [-1,  8*8*256])
 
-        full1 = full_layer(reshape_pool3, 256, 64, 1)
-        #full2 = full_layer(full1, 64, 32, 2)
-        model = full_layer(full1, 64, 2, 3)
+        full1 = full_layer(reshape_pool3, 8*8*256, 4096, 1)
+        #full2 = full_layer(full1, 4096, 256, 2)
+        model = full_layer(full1, 4096, 2, 3)
 
         return model
 
