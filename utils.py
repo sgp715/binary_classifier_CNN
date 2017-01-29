@@ -2,9 +2,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import imresize
+from sklearn.model_selection import train_test_split
 
 
-def preprocess(imgs):
+def _preprocess(imgs):
     """
     input: takes in numpy array representing images
     output: cleaned and processed data
@@ -18,17 +19,32 @@ def preprocess(imgs):
     return normalized
 
 
+def load_image(image_path):
+    """
+    input: path to image
+    output: image in numpy array
+    """
+
+    dims=64
+    img = imresize(plt.imread(image_path), (dims, dims))
+
+    return img
+
 def load_images(path, label):
     """
     input: file path containing images, and the labes it should be assigned (1 or 0)
     output: the images converted into a numpy matrix
     """
 
-    dims=64
-
-    files = [path + '/' + f for f in os.listdir(path) if ".jpg" in f]
-    imgs = [imresize(plt.imread(f), (dims, dims))  for f in files]
-    imgs = [i for i in imgs if i.shape == (dims, dims, 3)]
+    try:
+        files = [path + '/' + f for f in os.listdir(path) if ".jpg" in f]
+    except:
+        print "Files not found"
+        exit()
+    imgs = [load_image(f)  for f in files]
+    dims = 64
+    imgs = [i for i in imgs if i.shape == (dims, dims, 3)] ## make sure dimensions work
+    # imgs = _preprocess(imgs)
     labels = np.array([[label, 1 - label] for i in imgs])
     data = np.array(imgs)
 
@@ -49,3 +65,12 @@ def get_data(path_1, path_2):
     labels = np.concatenate((positive_label, negative_label))
 
     return data, labels
+
+def get_test_and_validation_data(path_1, path_2):
+    """
+    input: the location of datasets
+    output: test and validation data and labels
+    """
+
+    data, labels = get_data(path_1, path_2)
+    return train_test_split(data, labels, test_size=0.2)

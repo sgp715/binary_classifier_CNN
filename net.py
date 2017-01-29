@@ -65,22 +65,38 @@ def model(X):
     reshape_pool3 = tf.reshape(pool3, [-1, 256])
 
     full1 = full_layer(reshape_pool3, 256, 64, 1)
-    full2 = full_layer(full1, 64, 32, 2)
-    model = full_layer(full2, 32, 2, 3)
+    #full2 = full_layer(full1, 64, 32, 2)
+    model = full_layer(full1, 64, 2, 3)
 
     return model
 
-def train(model, data, labels):
+X = tf.placeholder(tf.float32, shape=[None, 64, 64, 3], name='X')
+Y = tf.placeholder(tf.float32, shape=[None, 2], name='Y')
+
+
+def compute_accuracy(expected, actual):
+    """
+    input: the expected and actual
+    output: the percent accuracy
+    """
+
+    assert(len(expected) == len(actual))
+
+    length_data = len(expected)
+
+    compare = np.array(np.argmax(expected, axis=1) == np.argmax(actual, axis=1))
+    correct = (compare == True).sum()
+
+    return (float(correct) / float(length_data)) * 100
+
+def train(data, labels, validation_data, validation_labels):
     """
     train model
     """
 
-    X = tf.placeholder(tf.float32, shape=[None, 64, 64, 3], name='X')
-    Y = tf.placeholder(tf.float32, shape=[None, 2], name='Y')
+    logits = model(X)
 
-    model = model(X)
-
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=model, labels=Y))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))
     learning_rate = 0.001
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
@@ -88,8 +104,7 @@ def train(model, data, labels):
 
     batch_size = 50
     epochs = 100
-    length_data = len(data)
-    print "Accuracy on training: "
+    print "Accuracy: "
     with tf.Session() as sess:
 
         if os.path.isfile('model.ckpt.meta'):
@@ -107,12 +122,9 @@ def train(model, data, labels):
                     sess.run(optimizer, feed_dict={X:data[idx], Y:labels[idx]})
 
                 if epoch % 20 == 0:
-                    training_cost = sess.run(cost, feed_dict={X:data, Y:labels})
-                    #print "cost: " + str(training_cost)
-                    output = np.array(sess.run(model, feed_dict={X: data}))
-                    compare = np.array(np.argmax(output, axis=1) == np.argmax(labels, axis=1))
-                    correct = (compare == True).sum()
-                    print str((float(correct) / float(length_data)) * 100) + '%'
+                    output = np.array(sess.run(logits, feed_dict={X: validation_data}))
+                    accuracy = compute_accuracy(output, validation_labels)
+                    print accuracy + '%'
         except KeyboardInterrupt:
             print "Saving model before exiting"
             saver.save(sess, "model.ckpt")
@@ -122,23 +134,75 @@ def train(model, data, labels):
     saver.save(sess, "model.ckpt")
 
 
+def test(data, labels):
+    """
+    input: data and labels of test data
+    prints out the accuracy on the test data
+    """
+
+    logits = model(X)
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+
+        if os.path.isfile('model.ckpt.meta'):
+            saver = tf.train.import_meta_graph('model.ckpt.meta')
+            saver.restore(sess, tf.train.latest_checkpoint('./'))
+            output = sess.run(logits, feed_dict={X:data, Y:labels})
+            accuracy = compute_accuracy(output, labels)
+            print accuracy
+        else:
+            print "Model does not exist yet...train first"
+
+def classify(image_path):
+    """
+    input: path to an image
+    output: the classification of that image
+    """
+
+    img = [utils.load_image(image_path)]
+
+    logits = model(X)
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        if os.path.isfile('model.ckpt.meta'):
+            saver = tf.train.import_meta_graph('model.ckpt.meta')
+            saver.restore(sess, tf.train.latest_checkpoint('./'))
+            output = np.argmax(sess.run(logits, feed_dict={X: img})[0])
+            print output
+            return output
+        else:
+            print "Model does not exist yet...train first"
+
 if __name__ == "__main__":
 
     args = sys.argv[1:]
     def usage_message():
-        print "usage: net.py -train [path/to/data1] [path/to/data2]"
+        print "usage:"
+        print "net.py -train <path/to/data1> <path/to/data2>"
+        print "net.py -test <path/to/data1> <path/to/data2>"
+        print "net.py -classify <path/image/to/classify>"
         exit()
 
-    if len(args) != 3:
-        usage_message()
+    if len(args) == 2:
+        if args[0] == "-classify":
+            path = args[1]
+            classify(path)
+            exit()
 
-    if args[0] == "-train":
-
+    if len(args) == 3:
         label_1_images = args[1]
         label_0_images = args[2]
-        data, labels = utils.get_data(label_1_images, label_0_images)
 
-        print "Initializing training..."
-        train(model, data, labels)
-    else:
-        usage_message()
+        if args[0] == "-train":
+            data, val_data, labels, val_labels = utils.get_test_and_validation_data(label_1_images, label_0_images)
+            print "Initializing training..."
+            train(data, labels, val_data, val_labels)
+            exit()
+        if args[0] == "-test":
+            data, labels = utils.get_data(label_1_images, label_0_images)
+            test(data, labels)
+            exit()
+
+    usage_message()
