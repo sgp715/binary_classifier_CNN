@@ -53,27 +53,6 @@ def full_layer(X, input_size, output_size, number):
     return full
 
 
-def classify(image_path):
-    """
-    input: path to an image
-    output: the classification of that image
-    """
-
-    img = [utils.load_image(image_path)]
-
-    logits = model(X)
-    saver = tf.train.Saver()
-
-    with tf.Session() as sess:
-        if os.path.isfile('model.ckpt.meta'):
-            saver = tf.train.import_meta_graph('model.ckpt.meta')
-            saver.restore(sess, tf.train.latest_checkpoint('./'))
-            output = np.argmax(sess.run(logits, feed_dict={X: img})[0])
-            print output
-            return output
-        else:
-            print "Model does not exist yet...train first"
-
 class Net:
 
     @staticmethod
