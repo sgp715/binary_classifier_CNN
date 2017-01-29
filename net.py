@@ -23,6 +23,7 @@ def conv_layer(X, kernel, strides, number):
 
     return conv
 
+
 def pool_layer(X, ksize, kstrides, number):
     """
     inputs: takes in the parameters to create a pooling layer
@@ -37,6 +38,7 @@ def pool_layer(X, ksize, kstrides, number):
 
     return pool
 
+
 def full_layer(X, input_size, output_size, number):
     """
     inputs: dimensions of fully connected layer
@@ -50,109 +52,6 @@ def full_layer(X, input_size, output_size, number):
 
     return full
 
-def model(X):
-    """
-    output: return the model
-    """
-
-    conv1 = conv_layer(X, [11, 11, 3, 64], [1, 4, 4, 1], 1)
-    pool1 = pool_layer(conv1, [1, 3, 3, 1], [1, 2, 2, 1], 1)
-    conv2 = conv_layer(pool1, [5, 5, 64, 128], [1, 1, 1, 1], 2)
-    pool2 = pool_layer(conv2, [1, 3, 3, 1], [1, 2, 2, 1], 2)
-    conv3 = conv_layer(pool2, [3, 3, 128, 256], [1, 1, 1, 1], 3)
-    pool3 = pool_layer(conv3, [1, 3, 3, 1], [1, 2, 2, 1], 3)
-
-    reshape_pool3 = tf.reshape(pool3, [-1, 256])
-
-    full1 = full_layer(reshape_pool3, 256, 64, 1)
-    #full2 = full_layer(full1, 64, 32, 2)
-    model = full_layer(full1, 64, 2, 3)
-
-    return model
-
-X = tf.placeholder(tf.float32, shape=[None, 64, 64, 3], name='X')
-Y = tf.placeholder(tf.float32, shape=[None, 2], name='Y')
-
-
-def compute_accuracy(expected, actual):
-    """
-    input: the expected and actual
-    output: the percent accuracy
-    """
-
-    assert(len(expected) == len(actual))
-
-    length_data = len(expected)
-
-    compare = np.array(np.argmax(expected, axis=1) == np.argmax(actual, axis=1))
-    correct = (compare == True).sum()
-
-    return (float(correct) / float(length_data)) * 100
-
-def train(data, labels, validation_data, validation_labels):
-    """
-    train model
-    """
-
-    logits = model(X)
-
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))
-    learning_rate = 0.001
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
-
-    saver = tf.train.Saver()
-
-    batch_size = 50
-    epochs = 100
-    print "Accuracy: "
-    with tf.Session() as sess:
-
-        if os.path.isfile('model.ckpt.meta'):
-            saver = tf.train.import_meta_graph('model.ckpt.meta')
-            saver.restore(sess, tf.train.latest_checkpoint('./'))
-        else:
-            sess.run(tf.global_variables_initializer())
-
-        try:
-            for epoch in range(epochs):
-                idxs = np.random.permutation(len(data))
-                batches = len(data) // batch_size
-                for batch in range(batches):
-                    idx = idxs[batch * batch_size: (batch + 1) * batch_size]
-                    sess.run(optimizer, feed_dict={X:data[idx], Y:labels[idx]})
-
-                if epoch % 20 == 0:
-                    output = np.array(sess.run(logits, feed_dict={X: validation_data}))
-                    accuracy = compute_accuracy(output, validation_labels)
-                    print accuracy + '%'
-        except KeyboardInterrupt:
-            print "Saving model before exiting"
-            saver.save(sess, "model.ckpt")
-            exit()
-
-    print "Saving model"
-    saver.save(sess, "model.ckpt")
-
-
-def test(data, labels):
-    """
-    input: data and labels of test data
-    prints out the accuracy on the test data
-    """
-
-    logits = model(X)
-    saver = tf.train.Saver()
-
-    with tf.Session() as sess:
-
-        if os.path.isfile('model.ckpt.meta'):
-            saver = tf.train.import_meta_graph('model.ckpt.meta')
-            saver.restore(sess, tf.train.latest_checkpoint('./'))
-            output = sess.run(logits, feed_dict={X:data, Y:labels})
-            accuracy = compute_accuracy(output, labels)
-            print accuracy
-        else:
-            print "Model does not exist yet...train first"
 
 def classify(image_path):
     """
@@ -175,20 +74,144 @@ def classify(image_path):
         else:
             print "Model does not exist yet...train first"
 
+class Net:
+
+    @staticmethod
+    def compute_accuracy(expected, actual):
+        """
+        input: the expected and actual
+        output: the percent accuracy
+        """
+
+        assert(len(expected) == len(actual))
+
+        length_data = len(expected)
+
+        compare = np.array(np.argmax(expected, axis=1) == np.argmax(actual, axis=1))
+        correct = (compare == True).sum()
+
+        return (float(correct) / float(length_data)) * 100
+
+    @staticmethod
+    def model(X):
+        """
+        output: return the model
+        """
+
+        conv1 = conv_layer(X, [11, 11, 3, 64], [1, 4, 4, 1], 1)
+        pool1 = pool_layer(conv1, [1, 3, 3, 1], [1, 2, 2, 1], 1)
+        conv2 = conv_layer(pool1, [5, 5, 64, 128], [1, 1, 1, 1], 2)
+        pool2 = pool_layer(conv2, [1, 3, 3, 1], [1, 2, 2, 1], 2)
+        conv3 = conv_layer(pool2, [3, 3, 128, 256], [1, 1, 1, 1], 3)
+        pool3 = pool_layer(conv3, [1, 3, 3, 1], [1, 2, 2, 1], 3)
+
+        reshape_pool3 = tf.reshape(pool3, [-1, 256])
+
+        full1 = full_layer(reshape_pool3, 256, 64, 1)
+        #full2 = full_layer(full1, 64, 32, 2)
+        model = full_layer(full1, 64, 2, 3)
+
+        return model
+
+
+    def __init__(self):
+
+        self.sess = tf.Session()
+        self.X = tf.placeholder(tf.float32, shape=[None, 64, 64, 3], name='X')
+        self.Y = tf.placeholder(tf.float32, shape=[None, 2], name='Y')
+        self.logits = self.model(self.X)
+        self.saver = tf.train.Saver()
+
+        if os.path.isfile('model.ckpt.meta'):
+            self.saver = tf.train.import_meta_graph('model.ckpt.meta')
+            self.saver.restore(self.sess, tf.train.latest_checkpoint('./'))
+
+    def train(self, data, labels, validation_data, validation_labels):
+        """
+        train model
+        """
+
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.Y))
+        learning_rate = 0.001
+        optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+
+        self.sess.run(tf.global_variables_initializer())
+
+        batch_size = 50
+        epochs = 100
+        print "Accuracy: "
+
+        try:
+            for epoch in range(epochs):
+                idxs = np.random.permutation(len(data))
+                batches = len(data) // batch_size
+                for batch in range(batches):
+                    idx = idxs[batch * batch_size: (batch + 1) * batch_size]
+                    self.sess.run(optimizer, feed_dict={self.X:data[idx], self.Y:labels[idx]})
+
+                if epoch % 20 == 0:
+                    output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data}))
+                    accuracy = self.compute_accuracy(output, validation_labels)
+                    print str(accuracy) + '%'
+        except KeyboardInterrupt:
+            print "Saving model before exiting"
+            self.saver.save(self.sess, "model.ckpt")
+            exit()
+
+        print "Saving model"
+        self.saver.save(sess, "model.ckpt")
+
+    def test(self, data, labels):
+        """
+        input: data and labels of test data
+        prints out the accuracy on the test data
+        """
+
+        if os.path.isfile('model.ckpt.meta'):
+            self.saver = tf.train.import_meta_graph('model.ckpt.meta')
+            self.saver.restore(self.sess, tf.train.latest_checkpoint('./'))
+            output = self.sess.run(self.logits, feed_dict={self.X:data, self.Y:labels})
+            accuracy = self.compute_accuracy(output, labels)
+            print "Accuracy: " + str(accuracy) + '%'
+        else:
+            print "Model does not exist yet...train first"
+
+    def classify(self, image_path):
+        """
+        input: path to an image
+        output: the classification of that image
+        """
+
+        img = [utils.load_image(image_path)]
+
+        if os.path.isfile('model.ckpt.meta'):
+            output = np.argmax(self.sess.run(self.logits, feed_dict={self.X: img})[0])
+            print "classification: " + str(output)
+            return output
+        else:
+            print "Model does not exist yet...train first"
+
+    def __del__(self):
+        self.saver.save(self.sess, "model.ckpt")
+        self.sess.close()
+
 if __name__ == "__main__":
 
     args = sys.argv[1:]
     def usage_message():
         print "usage:"
-        print "net.py -train <path/to/data1> <path/to/data2>"
-        print "net.py -test <path/to/data1> <path/to/data2>"
+        print "net.py -train <path/to/images1> <path/to/images2>"
+        print "net.py -test <path/to/images1> <path/to/images2>"
         print "net.py -classify <path/image/to/classify>"
         exit()
+
+    # instantiate the net
+    net = Net()
 
     if len(args) == 2:
         if args[0] == "-classify":
             path = args[1]
-            classify(path)
+            net.classify(path)
             exit()
 
     if len(args) == 3:
@@ -198,11 +221,11 @@ if __name__ == "__main__":
         if args[0] == "-train":
             data, val_data, labels, val_labels = utils.get_test_and_validation_data(label_1_images, label_0_images)
             print "Initializing training..."
-            train(data, labels, val_data, val_labels)
+            net.train(data, labels, val_data, val_labels)
             exit()
         if args[0] == "-test":
             data, labels = utils.get_data(label_1_images, label_0_images)
-            test(data, labels)
+            net.test(data, labels)
             exit()
 
     usage_message()
