@@ -140,7 +140,7 @@ class Net:
             exit()
 
         print "Saving model"
-        self.saver.save(sess, "model.ckpt")
+        self.saver.save(self.sess, "model.ckpt")
 
     def test(self, data, labels):
         """
