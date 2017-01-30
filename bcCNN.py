@@ -95,7 +95,6 @@ class Net:
 
         return model
 
-
     def __init__(self):
 
         self.sess = tf.Session()
@@ -175,6 +174,7 @@ class Net:
     def __del__(self):
         self.saver.save(self.sess, "model.ckpt")
         self.sess.close()
+
 
 if __name__ == "__main__":
 
