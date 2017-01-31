@@ -113,12 +113,12 @@ class Net:
         """
 
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.Y))
-        learning_rate = 0.001
+        learning_rate = 0.0001
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
         self.sess.run(tf.global_variables_initializer())
 
-        batch_size = 50
+        batch_size = 100
         epochs = 100
         print "Accuracy: "
 
@@ -130,10 +130,11 @@ class Net:
                     idx = idxs[batch * batch_size: (batch + 1) * batch_size]
                     self.sess.run(optimizer, feed_dict={self.X:data[idx], self.Y:labels[idx]})
 
-                if epoch % 20 == 0:
+                if epoch % 5 == 0:
                     output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data}))
                     accuracy = self.compute_accuracy(output, validation_labels)
-                    print str(epoch) + ". " + str(accuracy) + '%'
+                    print "epoch "+ str(epoch) + ": " + str(accuracy) + '%'
+
         except KeyboardInterrupt:
             print "Saving model before exiting"
             self.saver.save(self.sess, "model.ckpt")
