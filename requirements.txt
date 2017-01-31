@@ -1,2 +1,6 @@
 tensorflow
 numpy
+matplotlib
+scipy
+Pillow
+sklearn
