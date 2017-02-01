@@ -140,6 +140,7 @@ class Net(object):
         except KeyboardInterrupt:
             print "Saving model before exiting"
             self.saver.save(self.sess, "model.ckpt")
+            self.saved_model = True
             exit()
 
         print "Saving model"
