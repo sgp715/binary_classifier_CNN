@@ -153,8 +153,6 @@ class Net(object):
 
         if self.saved_model:
             print "Testing..."
-            self.saver = tf.train.import_meta_graph('model.ckpt.meta')
-            self.saver.restore(self.sess, tf.train.latest_checkpoint('./'))
             output = self.sess.run(self.logits, feed_dict={self.X:data, self.Y:labels})
             accuracy = self.compute_accuracy(output, labels)
             print "Accuracy: " + str(accuracy) + '%'
