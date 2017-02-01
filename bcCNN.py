@@ -53,7 +53,7 @@ def full_layer(X, input_size, output_size, number):
     return full
 
 
-class Net:
+class Net(object):
 
     @staticmethod
     def compute_accuracy(expected, actual):
@@ -103,9 +103,11 @@ class Net:
         self.logits = self.model(self.X)
         self.saver = tf.train.Saver()
 
+        self.saved_model = False
         if os.path.isfile('model.ckpt.meta'):
             self.saver = tf.train.import_meta_graph('model.ckpt.meta')
             self.saver.restore(self.sess, tf.train.latest_checkpoint('./'))
+            self.saved_model = True
 
     def train(self, data, labels, validation_data, validation_labels):
         """
@@ -130,10 +132,10 @@ class Net:
                     idx = idxs[batch * batch_size: (batch + 1) * batch_size]
                     self.sess.run(optimizer, feed_dict={self.X:data[idx], self.Y:labels[idx]})
 
-                if epoch % 5 == 0:
-                    output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data}))
-                    accuracy = self.compute_accuracy(output, validation_labels)
-                    print "epoch "+ str(epoch) + ": " + str(accuracy) + '%'
+                # if epoch % 5 == 0:
+                output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data}))
+                accuracy = self.compute_accuracy(output, validation_labels)
+                print "epoch "+ str(epoch) + ": " + str(accuracy) + '%'
 
         except KeyboardInterrupt:
             print "Saving model before exiting"
@@ -149,7 +151,8 @@ class Net:
         prints out the accuracy on the test data
         """
 
-        if os.path.isfile('model.ckpt.meta'):
+        if self.saved_model:
+            print "Testing..."
             self.saver = tf.train.import_meta_graph('model.ckpt.meta')
             self.saver.restore(self.sess, tf.train.latest_checkpoint('./'))
             output = self.sess.run(self.logits, feed_dict={self.X:data, self.Y:labels})
@@ -164,16 +167,15 @@ class Net:
         output: the classification of that image
         """
 
-        img = [utils.load_image(image_path)]
-
-        if os.path.isfile('model.ckpt.meta'):
+        if self.saved_model:
+            img = [utils.load_image(image_path)]
+            print "classifying..."
             output = np.argmax(self.sess.run(self.logits, feed_dict={self.X: img})[0])
             return output
         else:
             print "Model does not exist yet...train first"
 
     def __del__(self):
-        self.saver.save(self.sess, "model.ckpt")
         self.sess.close()
 
 
