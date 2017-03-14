@@ -1,14 +1,6 @@
 # Binary Classifier Convolutional Neural Network
 
 # Install
-* setup a virtualenv
-```
-$ virtualenv bcCNN
-```
-* activate the virtualenv
-```
-$ source bcCNN/bin/activate
-```
 * pip install -r requirements.txt
 
 # Usage
