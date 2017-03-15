@@ -9,6 +9,3 @@ WORKDIR /bccnn
 COPY . /bccnn
 
 RUN pip install -r requirements.txt
-
-#VOLUME ./images:/bccnn/images
-#VOLUME ./classifiers:/bccnn/classifiers
