@@ -21,9 +21,9 @@ $ docker run -it -v $(pwd)/classifiers:/bccnn/classifiers -v $(pwd)/images:/bccn
 ```
 $ python bcCNN.py -train <path/to/images1> <path/to/images2> <dir/to/save/model> <model/category>
 ```
-    * Here path <path/to/images1> corresponds to images/formal/positive and <path/to/images2> corresponds to images/formal/negative from the example above
-    * <dir/to/save/model> corresponds to where we want the model we train to be saved which in our case is classifiers
-    * And <model/category> is what we want the name of the model to be (for us formal)
+* Here path <path/to/images1> corresponds to images/formal/positive and <path/to/images2> corresponds to images/formal/negative from the example above
+* <dir/to/save/model> corresponds to where we want the model we train to be saved which in our case is classifiers
+* And <model/category> is what we want the name of the model to be (for us formal)
 * test the accuracy on images from two directories
 ```
 $ python bcCNN.py -test <path/to/images1> <path/to/images2>
