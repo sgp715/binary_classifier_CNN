@@ -195,11 +195,13 @@ class Net(object):
 
             if self.saved_model:
                 img = [utils.load_image(image_path)]
-                output = np.argmax(self.sess.run(self.logits, feed_dict={self.X: img, self.p_hidden: 1.0})[0]).item()
+                output = self.sess.run(self.logits, feed_dict={self.X: img, self.p_hidden: 1.0})[0]
+                # TODO: figure out why this isn't a percent
+                classification = np.argmax(output).item()
                 conv = self.sess.run([self.c1, self.c2, self.c3], feed_dict={self.X: img, self.p_hidden: 1.0})
                 for idx,layer in enumerate(conv):
                     np.save('layer'+str(idx)+'.npy', layer)
-                return output
+                return classification
             else:
                 print "Model does not exist yet...train first"
 
