@@ -54,6 +54,8 @@ def full_layer(X, category, input_size, output_size, number):
     return full
 
 
+# TODO: let's make it so that the structure can be passed in as
+# a dictionary
 def model(X, category, p_hidden):
     """
     output: return the model
@@ -117,6 +119,10 @@ class Net(object):
             self.Y = tf.placeholder(tf.float32, shape=[None, 2], name='Y')
             self.p_hidden = tf.placeholder(tf.float32, name='p_hidden')
             self.logits, self.c1, self.c2, self.c3 = model(self.X, category, self.p_hidden)
+            cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.Y))
+            learning_rate = 0.0001
+
+            self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
             self.saver = tf.train.Saver()
 
             self.saved_model = False
@@ -134,11 +140,6 @@ class Net(object):
 
         with self.category_graph.as_default():
 
-            cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.Y))
-            learning_rate = 0.0001
-
-            optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
-
             self.sess.run(tf.global_variables_initializer())
 
 
@@ -152,12 +153,12 @@ class Net(object):
                     batches = len(data) // batch_size
                     for batch in range(batches):
                         idx = idxs[batch * batch_size: (batch + 1) * batch_size]
-                        self.sess.run(optimizer, feed_dict={self.X:data[idx], self.Y:labels[idx], self.p_hidden: 0.5})
+                        self.sess.run(self.optimizer, feed_dict={self.X:data[idx], self.Y:labels[idx], self.p_hidden: 0.5})
 
-                    # if epoch % 5 == 0:
-                    output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data, self.p_hidden: 1.0}))
-                    accuracy = self.compute_accuracy(output, validation_labels)
-                    print "epoch "+ str(epoch) + ": " + str(accuracy) + '%'
+                    if epoch % 5 == 0:
+                        output = np.array(self.sess.run(self.logits, feed_dict={self.X: validation_data, self.p_hidden: 1.0}))
+                        accuracy = self.compute_accuracy(output, validation_labels)
+                        print "epoch "+ str(epoch) + ": " + str(accuracy) + '%'
 
             except KeyboardInterrupt:
                 print "Saving model before exiting"
@@ -194,12 +195,8 @@ class Net(object):
 
             if self.saved_model:
                 img = [utils.load_image(image_path)]
-                print image_path
-                print "IMAGE"
-                print img
-                print "classifying..."
                 output = np.argmax(self.sess.run(self.logits, feed_dict={self.X: img, self.p_hidden: 1.0})[0]).item()
-		conv = self.sess.run([self.c1, self.c2, self.c3], feed_dict={self.X: img, self.p_hidden: 1.0})
+                conv = self.sess.run([self.c1, self.c2, self.c3], feed_dict={self.X: img, self.p_hidden: 1.0})
                 for idx,layer in enumerate(conv):
                     np.save('layer'+str(idx)+'.npy', layer)
                 return output
@@ -218,31 +215,44 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     def usage_message():
         print "usage:"
-        print "python bcCNN.py -train <path/to/images1> <path/to/images2> <dir/to/save/model> <model/category>"
+        print "python bcCNN.py -train <dir/to/save/model> <model/category> <path/to/images1> <path/to/images2>"
         print "python bcCNN.py -test <path/to/images1> <path/to/images2>"
-        print "python bcCNN.py -classify <path/image/to/classify>"
+        print "python bcCNN.py -classify <dir/to/save/model> <model/category> <path/image/to/classify>"
         exit()
 
-    if len(args) == 2:
-	net = Net('.', 'formal')
+    if len(args) == 3:
+
+        if args[0] == "-test":
+            print "here"
+            data, labels = utils.get_data(label_1_images, label_0_images)
+            net.test(data, labels)
+            exit()
+
+    elif len(args) == 4:
+
+        directory = args[1]
+        category = args[2]
+
         if args[0] == "-classify":
-            path = args[1]
+            print 'NOT HERE'
+            net = Net(directory, category)
+            path = args[3]
             print "classification: " + str(net.classify(path))
             exit()
 
+    elif len(args) == 5:
 
-    if len(args) == 5:
-
-        label_1_images = args[1]
+        # hacky stuff to trim slashes in directories
+        label_1_images = args[3]
         if label_1_images[-1] == '/':
             label_1_images = label_1_images[:-1]
-        label_0_images = args[2]
+        label_0_images = args[4]
         if label_0_images[-1] == '/':
             label_0_images = label_0_images[:-1]
-        directory = args[3]
-        category = args[4]
 
-        #instantiate object Net
+        directory = args[1]
+        category = args[2]
+
         net = Net(directory, category)
 
         if args[0] == "-train":
@@ -250,11 +260,5 @@ if __name__ == "__main__":
             print "Initializing training..."
             net.train(data, labels, val_data, val_labels)
             exit()
-
-        if args[0] == "-test":
-            	print "here"
-            	data, labels = utils.get_data(label_1_images, label_0_images)
-            	net.test(data, labels)
-            	exit()
 
     usage_message()
