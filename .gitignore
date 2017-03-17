@@ -6,3 +6,5 @@ checkpoint
 *.jpeg
 *.png
 *.zip*
+classifiers/
+images/
