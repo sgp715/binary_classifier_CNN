@@ -14,7 +14,7 @@ $ docker build -t bccnn_image .
     * The way I would structure this folder if I was going to train a formal classifier would be to put the formal images in images/formal/positive and images/formal/negative
 * To start that image we can run this command which will also allow all our changes made to persist in the docker image
 ```
-docker run -it -v $(pwd):/bccnn bccnn_image /bin/bash
+$ docker run -it -v $(pwd):/bccnn bccnn_image /bin/bash
 ```
 * You are now inside the docker container and can start training and testing to your hearts content and the models you train will persist outside of Docker as long as you save them inside the classifiers directory
 * Train the network with images from two directories
