@@ -218,15 +218,19 @@ if __name__ == "__main__":
     def usage_message():
         print "usage:"
         print "python bcCNN.py -train <dir/to/save/model> <model/category> <path/to/images1> <path/to/images2>"
-        print "python bcCNN.py -test <path/to/images1> <path/to/images2>"
+        print "python bcCNN.py -test <dir/to/model> <model/category> <path/to/images1> <path/to/images2>"
         print "python bcCNN.py -classify <dir/to/save/model> <model/category> <path/image/to/classify>"
         exit()
 
-    if len(args) == 3:
+    if len(args) == 5:
 
         if args[0] == "-test":
-            print "here"
-            data, labels = utils.get_data(label_1_images, label_0_images)
+            directory = args[1]
+	    category = args[2]
+	    net = Net(directory, category)
+            label_1_images = args[3]
+            label_0_images = args[4]
+	    data, labels = utils.get_data(label_1_images, label_0_images)
             net.test(data, labels)
             exit()
 
